@@ -1,0 +1,46 @@
+# Dependencies (will be installed in container)
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Strapi temp files
+.tmp/
+.strapi/
+.strapi-updater.json
+.cache/
+
+# SQLite database
+*.db
+*.sqlite
+
+# Git
+.git/
+.gitignore
+
+# Environment (passed via docker-compose)
+.env*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+SEED_INSTRUCTIONS.md
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Logs
+*.log
+npm-debug.log*

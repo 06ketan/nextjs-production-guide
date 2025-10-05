@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_blocks_post_lists",
+  "info": {
+    "displayName": "Post List",
+    "icon": "list",
+    "description": "List of posts"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "posts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::post.post"
+    }
+  }
+}
+

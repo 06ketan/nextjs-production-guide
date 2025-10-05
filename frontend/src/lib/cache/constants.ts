@@ -1,0 +1,12 @@
+export const APP_PREFIX = "NEXTJS_GUIDE:";
+
+export const KEY_PREFIXES = {
+  FETCH: `${APP_PREFIX}FETCH:`,
+  PAGE: `${APP_PREFIX}PAGE:`,
+  ROUTE: `${APP_PREFIX}ROUTE:`,
+  OTHERS: `${APP_PREFIX}OTHERS:`,
+  TAG_INDEX: `${APP_PREFIX}TAG_INDEX:`,
+  SESSION: `${APP_PREFIX}SESSION:`,
+} as const;
+
+export const BUILD_ID_KEY = `${APP_PREFIX}BUILD_ID`;

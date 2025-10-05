@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_blocks_stories",
+  "info": {
+    "displayName": "Story Block",
+    "icon": "book",
+    "description": "Long-form story content block"
+  },
+  "options": {},
+  "attributes": {
+    "storyInfo": {
+      "type": "component",
+      "repeatable": true,
+      "component": "blocks.story-section"
+    },
+    "showShareButton": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
+

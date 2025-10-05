@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_blocks_banners",
+  "info": {
+    "displayName": "Banner",
+    "icon": "image",
+    "description": "Banner section with CTA"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "backgroundImage": {
+      "type": "string"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaLink": {
+      "type": "string"
+    }
+  }
+}
+

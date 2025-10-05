@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_shared_navigations",
+  "info": {
+    "displayName": "Navigation",
+    "icon": "link",
+    "description": "Navigation translations"
+  },
+  "options": {},
+  "attributes": {
+    "home": {
+      "type": "string",
+      "required": true
+    },
+    "posts": {
+      "type": "string",
+      "required": true
+    },
+    "about": {
+      "type": "string",
+      "required": true
+    },
+    "readMore": {
+      "type": "string"
+    },
+    "backToHome": {
+      "type": "string"
+    },
+    "backToPosts": {
+      "type": "string"
+    },
+    "loading": {
+      "type": "string"
+    },
+    "notFound": {
+      "type": "string"
+    },
+    "noPostsFound": {
+      "type": "string"
+    }
+  }
+}
+

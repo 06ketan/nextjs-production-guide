@@ -1,0 +1,34 @@
+{
+  "collectionName": "components_blocks_heroes",
+  "info": {
+    "displayName": "Hero",
+    "icon": "star",
+    "description": "Hero section with title, description and CTA"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "ctaText": {
+      "type": "string"
+    },
+    "ctaLink": {
+      "type": "string"
+    },
+    "backgroundImage": {
+      "type": "string"
+    },
+    "useSparkles": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

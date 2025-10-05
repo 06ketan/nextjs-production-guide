@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_shared_navigation_items",
+  "info": {
+    "displayName": "Navigation Item",
+    "icon": "link",
+    "description": "Single navigation item with route reference"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "route": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::route.route"
+    },
+    "order": {
+      "type": "integer",
+      "default": 0
+    }
+  }
+}
+

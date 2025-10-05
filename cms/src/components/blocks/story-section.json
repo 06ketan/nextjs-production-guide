@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_blocks_story_sections",
+  "info": {
+    "displayName": "Story Section",
+    "icon": "file-text",
+    "description": "Section within a story"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "addDivider": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
+

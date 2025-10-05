@@ -1,0 +1,329 @@
+# Redis Cluster + RedisInsight Only (for local testing)
+# Frontend and CMS run locally via npm
+
+networks:
+  redis-net:
+    driver: bridge
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis Cluster (6 nodes: 3 masters + 3 replicas)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis-node-1:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7001:6379"  # Expose to host for local apps
+    networks: [redis-net]
+    volumes:
+      - redis-node-1-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-2:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7002:6379"
+    networks: [redis-net]
+    volumes:
+      - redis-node-2-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-3:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7003:6379"
+    networks: [redis-net]
+    volumes:
+      - redis-node-3-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-4:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7004:6379"
+    networks: [redis-net]
+    volumes:
+      - redis-node-4-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-5:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7005:6379"
+    networks: [redis-net]
+    volumes:
+      - redis-node-5-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-6:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "7006:6379"
+    networks: [redis-net]
+    volumes:
+      - redis-node-6-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis Cluster Init
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis-cluster-init:
+    image: redis:7-alpine
+    depends_on:
+      redis-node-1: { condition: service_healthy }
+      redis-node-2: { condition: service_healthy }
+      redis-node-3: { condition: service_healthy }
+      redis-node-4: { condition: service_healthy }
+      redis-node-5: { condition: service_healthy }
+      redis-node-6: { condition: service_healthy }
+    networks: [redis-net]
+    environment:
+      - REDIS_AUTH=${REDIS_AUTH:-dev-redis-password}
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "⏳ Waiting for nodes..."
+        sleep 2
+        echo "🔍 Checking if cluster exists..."
+        STATE=$$(redis-cli -h redis-node-1 -p 6379 -a "$$REDIS_AUTH" cluster info 2>/dev/null | grep -E '^cluster_state:' | cut -d: -f2 | tr -d '\r\n' || true)
+        if [ "$$STATE" = "ok" ]; then
+          echo "✅ Cluster already initialized"
+          exit 0
+        fi
+        echo "🔧 Creating cluster..."
+        redis-cli --cluster create \
+          redis-node-1:6379 redis-node-2:6379 redis-node-3:6379 \
+          redis-node-4:6379 redis-node-5:6379 redis-node-6:6379 \
+          --cluster-replicas 1 -a "$$REDIS_AUTH" --cluster-yes
+        echo "✅ Cluster created"
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Standalone Redis (for testing/fallback)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis-standalone:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+    ports:
+      - "6380:6379"  # Different port to avoid conflict with cluster nodes
+    networks: [redis-net]
+    volumes:
+      - redis-standalone-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RedisInsight GUI
+  # ─────────────────────────────────────────────────────────────────────────────
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "8001:5540"
+    networks: [redis-net]
+    depends_on:
+      redis-cluster-init:
+        condition: service_completed_successfully
+    volumes:
+      - redisinsight-data:/data
+    environment:
+      - RI_APP_PORT=5540
+      - RI_ACCEPT_TERMS_AND_CONDITIONS=true
+      - REDIS_AUTH=${REDIS_AUTH:-dev-redis-password}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5540/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RedisInsight Auto-Configuration (optional)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redisinsight-init:
+    image: curlimages/curl:latest
+    depends_on:
+      redisinsight:
+        condition: service_started
+    networks: [redis-net]
+    environment:
+      - REDIS_AUTH=${REDIS_AUTH:-dev-redis-password}
+    command:
+      - sh
+      - -c
+      - |
+        echo "⏳ Waiting for RedisInsight API..."
+        for i in $$(seq 1 30); do
+          if curl -sf http://redisinsight:5540/api/health > /dev/null 2>&1; then
+            echo "✅ RedisInsight is ready"
+            break
+          fi
+          sleep 2
+        done
+        echo ""
+        echo "📝 Redis Connection Options:"
+        echo ""
+        echo "🔷 Redis Cluster:"
+        echo "   1. Open http://localhost:8001"
+        echo "   2. Click 'Add Database' → 'Redis Cluster'"
+        echo "   3. Add Master Nodes:"
+        echo "      - redis-node-1:6379"
+        echo "      - redis-node-2:6379"
+        echo "      - redis-node-3:6379"
+        echo "      - redis-node-4:6379"
+        echo "      - redis-node-5:6379"
+        echo "      - redis-node-6:6379"
+        echo "   4. Password: $$REDIS_AUTH"
+        echo "   5. TLS: Disabled"
+        echo ""
+        echo "🔷 Standalone Redis:"
+        echo "   1. Open http://localhost:8001"
+        echo "   2. Click 'Add Database' → 'Redis'"
+        echo "   3. Host: redis-standalone"
+        echo "   4. Port: 6379"
+        echo "   5. Password: $$REDIS_AUTH"
+        echo "   6. TLS: Disabled"
+        echo ""
+        echo "💡 From host machine, use: localhost:6380"
+        echo ""
+    restart: "no"
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:
+  redis-node-4-data:
+  redis-node-5-data:
+  redis-node-6-data:
+  redis-standalone-data:
+  redisinsight-data:

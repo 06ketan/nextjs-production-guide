@@ -1,0 +1,317 @@
+# Local Development Stack: Redis Cluster + RedisInsight + CMS + Frontend
+#
+# Usage:
+#   docker compose -f docker-compose.local.yml up -d
+#
+# Access:
+#   - Frontend:     http://localhost:3000
+#   - CMS Admin:    http://localhost:1337/admin
+#   - RedisInsight: http://localhost:8001
+
+networks:
+  local-net:
+    driver: bridge
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis Cluster (6 nodes: 3 masters + 3 replicas)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis-node-1:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-1-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-2:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-2-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-3:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-3-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-4:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-4-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-5:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-5-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis-node-6:
+    image: redis:7-alpine
+    command:
+      - redis-server
+      - --port
+      - "6379"
+      - --cluster-enabled
+      - "yes"
+      - --cluster-config-file
+      - nodes.conf
+      - --cluster-node-timeout
+      - "5000"
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_AUTH:-dev-redis-password}
+      - --masterauth
+      - ${REDIS_AUTH:-dev-redis-password}
+    networks: [local-net]
+    volumes:
+      - redis-node-6-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a '${REDIS_AUTH:-dev-redis-password}' ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Redis Cluster Init (creates 3 masters + 3 replicas)
+  # ─────────────────────────────────────────────────────────────────────────────
+  redis-cluster-init:
+    image: redis:7-alpine
+    depends_on:
+      redis-node-1: { condition: service_healthy }
+      redis-node-2: { condition: service_healthy }
+      redis-node-3: { condition: service_healthy }
+      redis-node-4: { condition: service_healthy }
+      redis-node-5: { condition: service_healthy }
+      redis-node-6: { condition: service_healthy }
+    networks: [local-net]
+    environment:
+      - REDIS_AUTH=${REDIS_AUTH:-dev-redis-password}
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "⏳ Waiting for nodes..."
+        sleep 2
+        echo "🔍 Checking if cluster exists..."
+        STATE=$$(redis-cli -h redis-node-1 -p 6379 -a "$$REDIS_AUTH" cluster info 2>/dev/null | grep -E '^cluster_state:' | cut -d: -f2 | tr -d '\r\n' || true)
+        if [ "$$STATE" = "ok" ]; then
+          echo "✅ Cluster already initialized"
+          exit 0
+        fi
+        echo "🔧 Creating cluster..."
+        redis-cli --cluster create \
+          redis-node-1:6379 redis-node-2:6379 redis-node-3:6379 \
+          redis-node-4:6379 redis-node-5:6379 redis-node-6:6379 \
+          --cluster-replicas 1 -a "$$REDIS_AUTH" --cluster-yes
+        echo "✅ Cluster created"
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # RedisInsight GUI
+  # Pre-configured to connect to Redis Cluster master nodes
+  # ─────────────────────────────────────────────────────────────────────────────
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "8001:5540"
+    networks: [local-net]
+    depends_on:
+      - redis-cluster-init
+    volumes:
+      - redisinsight-data:/data
+    environment:
+      - RI_APP_PORT=5540
+      - RI_ACCEPT_TERMS_AND_CONDITIONS=true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5540/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CMS (Strapi)
+  # ─────────────────────────────────────────────────────────────────────────────
+  cms:
+    image: node:20-alpine
+    working_dir: /app
+    networks: [local-net]
+    ports:
+      - "1337:1337"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=1337
+      - NODE_ENV=development
+      - APP_KEYS=${CMS_APP_KEYS:-key1,key2}
+    volumes:
+      - ./cms:/app
+      - cms-node-modules:/app/node_modules
+      - cms-tmp:/app/.tmp
+      - cms-strapi:/app/.strapi
+    command: sh -lc "npm ci && npm run build && npm run develop"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:1337/_health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Frontend (Next.js) - Production build with Redis cache handler
+  # ─────────────────────────────────────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    networks: [local-net]
+    ports:
+      - "3000:3000"
+    depends_on:
+      cms:
+        condition: service_healthy
+      redis-cluster-init:
+        condition: service_completed_successfully
+    environment:
+      - NODE_ENV=production
+      - DOCKER_CONTAINER=true
+      - IN_DOCKER=true
+      - STRAPI_URL=http://cms:1337
+      - STRAPI_TOKEN=${STRAPI_TOKEN:-}
+      - STRAPI_WEBHOOK_SECRET=${STRAPI_WEBHOOK_SECRET:-dev-webhook-secret}
+      - REDIS_AUTH=${REDIS_AUTH:-dev-redis-password}
+      - REDIS_CLUSTER_URLS=redis://redis-node-1:6379,redis://redis-node-2:6379,redis://redis-node-3:6379,redis://redis-node-4:6379,redis://redis-node-5:6379,redis://redis-node-6:6379
+      - REDIS_CACHE_DEBUG=${REDIS_CACHE_DEBUG:-true}
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next:/app/.next
+      - frontend-cache-handler:/app/.cache-handler
+    command: sh -lc "npm ci && npm run build && npm run start"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  redis-node-1-data:
+  redis-node-2-data:
+  redis-node-3-data:
+  redis-node-4-data:
+  redis-node-5-data:
+  redis-node-6-data:
+  redisinsight-data:
+  cms-node-modules:
+  cms-tmp:
+  cms-strapi:
+  frontend-node-modules:
+  frontend-next:
+  frontend-cache-handler:
