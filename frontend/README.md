@@ -50,19 +50,42 @@ Access:
 
 ## Redis Cache Handler
 
-The custom cache handler (`src/lib/cache/cache-handler.ts`) replaces Next.js default in-memory cache with Redis.
+The custom cache handler (`src/lib/cache/cache-handler.ts`) replaces Next.js default in-memory cache with Redis, supporting distributed deployments.
+
+**Key Features:**
+- **Automatic mode detection**: Cluster vs Standalone via env vars
+- **Docker NAT mapping**: Dynamically resolves internal Docker IPs (e.g., `172.19.0.x:6379`) to `localhost:700x`
+- **Graceful degradation**: App continues if Redis is unavailable (60s retry backoff)
+- **Tag-based invalidation**: Surgical cache updates via webhooks
 
 **Build the cache handler:**
 
 ```bash
-npm run build:cache  # Compiles to .cache-handler/
-npm run build        # Includes build:cache automatically
+npm run build:cache  # Compiles TypeScript to .cache-handler/
+npm run build        # Includes build:cache + Next.js build
 ```
 
-**Priority order for Redis connection:**
+**Connection priority:**
 1. Azure Redis (primary/secondary connection strings)
-2. Redis Cluster (`REDIS_CLUSTER_URLS`)
+2. Redis Cluster (`REDIS_CLUSTER_URLS`) - auto-builds NAT map for Docker
 3. Standalone Redis (`REDIS_URL`)
+
+**Docker Cluster NAT Mapping:**
+
+When connecting to Redis Cluster from outside Docker, the cluster reports internal IPs unreachable from the host. The cache handler automatically:
+
+1. Connects to each startup node individually
+2. Queries `CLUSTER NODES` to get internal Docker IP
+3. Builds mapping: `internal_ip:port → localhost:external_port`
+4. Passes `natMap` to ioredis Cluster constructor
+
+**Example logs:**
+```
+[Redis] 🔵 Creating Redis Cluster with 6 nodes
+[Redis] 🔧 Building natMap for Docker localhost cluster...
+[Redis] ✅ Built natMap: 6 mappings
+[Redis] ✅ Redis Cluster is ready
+```
 
 ## Project Structure
 
