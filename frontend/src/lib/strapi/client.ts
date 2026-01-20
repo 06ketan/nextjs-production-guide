@@ -1,3 +1,6 @@
+"server-only";
+
+import { cache } from "react";
 import type { Locale } from "@/lib/i18n/config";
 
 /**
@@ -319,13 +322,11 @@ export async function getAbout(locale: Locale = "en"): Promise<About | null> {
   return flattenAboutAttributes(response?.data);
 }
 
-// Global
-export async function getGlobal(locale: Locale = "en"): Promise<Global | null> {
-  // Middleware handles populate, just need locale
+export const getGlobal = cache(async (locale: Locale = "en"): Promise<Global | null> => {
   const response = await fetchStrapi<StrapiSingleResponse<Omit<Global, "id">>>(
     `/global?locale=${locale}`
   );
 
   if (!response?.data) return null;
   return flattenGlobalAttributes(response?.data);
-}
+});

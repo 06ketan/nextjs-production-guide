@@ -15,17 +15,6 @@ export default chain([securityMiddleware, localeMiddleware]);
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - robots.txt (robots file)
-     * - sitemap.xml (sitemap file)
-     * - .well-known (well-known files)
-     * - Static files (images, fonts, etc.)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap|.well-known|.*\\.(?:ico|png|jpg|jpeg|svg|json|xml|txt)$).*)",
+    "/((?!_next/static|_next/image|api|favicon\\.ico|robots\\.txt|\\.well-known|icon-\\d+x\\d+\\.png$|\\.(?:png|jpg|jpeg|json)$).*)",
   ],
 };

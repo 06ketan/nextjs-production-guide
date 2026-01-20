@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { cache } from "react";
+import { notFound, permanentRedirect } from "next/navigation";
 import { renderBlocks, type BlockItem } from "@/lib/engine";
 import { isValidLocale, i18n, type Locale } from "@/lib/i18n/config";
 import { fetchStrapi, ApiEndpoints } from "@/lib/strapi/fetchStrapi";
@@ -36,35 +37,51 @@ interface StrapiPost {
 
 type PageData = StrapiPage | StrapiPost;
 
-async function fetchPageOrPost(
+interface PageName {
+  pathName: string;
+  title: string;
+}
+
+
+const fetchPageNames = cache(async (locale: Locale): Promise<string[] | null> => {
+  try {
+    const response = await fetchStrapi<PageName[]>(
+      `/pages/names?locale=${locale}`,
+      {  }, // Cache for 1 minute
+      {},
+      "page-names"
+    );
+    return response?.data?.map((p) => p.pathName) || [];
+  } catch (error) {
+    console.warn("[Page] Failed to fetch page names, using fallback:", error);
+    return null;
+  }
+});
+
+async function fetchPage(
   path: string,
   locale: Locale
-): Promise<PageData | null> {
-  // First try to find a Page with this pathName
-  const pageResponse = await fetchStrapi<StrapiPage[]>(
+): Promise<StrapiPage | null> {
+  const response = await fetchStrapi<StrapiPage[]>(
     `${ApiEndpoints?.pages}?filters[pathName][$eq]=${path}&locale=${locale}`,
     {},
     {},
     "pages"
   );
+  return response?.data?.[0] || null;
+}
 
-  if (pageResponse?.data?.[0]) {
-    return pageResponse?.data?.[0];
-  }
-
-  // If not a page, try to find a Post with this pathName
-  const postResponse = await fetchStrapi<StrapiPost[]>(
-    `${ApiEndpoints?.posts}?filters[pathName][$eq]=${path}&locale=${locale}`,
+async function fetchPost(
+  slug: string,
+  locale: Locale
+): Promise<StrapiPost | null> {
+  const response = await fetchStrapi<StrapiPost[]>(
+    `${ApiEndpoints?.posts}?filters[slug][$eq]=${slug}&locale=${locale}`,
     {},
     {},
     "posts"
   );
-
-  if (postResponse?.data?.[0]) {
-    return postResponse?.data?.[0];
-  }
-
-  return null;
+  return response?.data?.[0] || null;
 }
 
 export async function generateMetadata({
@@ -85,9 +102,23 @@ export async function generateMetadata({
   }
 
   const locale: Locale = isValidLocale(lang) ? lang : i18n?.defaultLocale;
-  const pageData = await fetchPageOrPost(path, locale);
-  const { seo } = extractSeoData(pageData);
+  const normalizedPath = path === "/" ? "" : path.replace(/^\//, "");
 
+  const validPageNames = await fetchPageNames(locale);
+
+  const isPostRoute =
+    normalizedPath.startsWith("posts/") && validPageNames?.includes("posts");
+  const postSlug = isPostRoute ? normalizedPath.replace("posts/", "") : null;
+
+  let pageData: PageData | null = null;
+
+  if (isPostRoute && postSlug) {
+    pageData = await fetchPost(postSlug, locale);
+  } else if (validPageNames?.includes(normalizedPath)) {
+    pageData = await fetchPage(path, locale);
+  }
+
+  const { seo } = extractSeoData(pageData);
   return seo;
 }
 
@@ -99,16 +130,33 @@ export default async function DynamicPage({
   const { lang, slug: slugArray = [] } = await params;
   const path = slugArray?.length > 0 ? "/" + slugArray?.join("/") : "/";
   const locale: Locale = isValidLocale(lang) ? lang : i18n?.defaultLocale;
-
-  // Fetch page or post from Strapi
-  const pageData = await fetchPageOrPost(path, locale);
-
-  if (!pageData) {
+  // Prevent infinite redirect loop: if already on not-found, use notFound()
+  if (path === "/not-found") {
     notFound();
   }
 
-  // Render blocks from Strapi with locale context
-  // This happens during build for SSG
+  const validPageNames = await fetchPageNames(locale);
+
+  const isPostRoute = path.startsWith("/posts/") && validPageNames?.includes("/posts");
+  const postSlug = isPostRoute ? path.replace("/posts/", "") : null;
+
+  const isValidPage = validPageNames?.includes(path);
+  if (!isPostRoute && !isValidPage ) {
+    permanentRedirect(`/${locale}/not-found`);
+  }
+
+  let pageData: PageData | null = null;
+
+  if (isPostRoute && postSlug&& postSlug!==""&&postSlug!=="/") {
+    pageData = await fetchPost(postSlug, locale);
+  } else if (isValidPage) {
+    pageData = await fetchPage(path, locale);
+  }
+
+  if (!pageData) {
+    permanentRedirect(`/${locale}/not-found`);
+  }
+
   if (
     pageData?.blocks &&
     Array.isArray(pageData?.blocks) &&
