@@ -4,9 +4,9 @@
   "description": "A Strapi CMS for Next.js demo",
   "license": "MIT",
   "scripts": {
+    "build": "strapi build",
     "develop": "strapi develop",
     "start": "strapi start",
-    "build": "strapi build",
     "strapi": "strapi"
   },
   "dependencies": {
@@ -14,6 +14,7 @@
     "@strapi/plugin-users-permissions": "4.25.23",
     "@strapi/strapi": "4.25.23",
     "better-sqlite3": "^9.4.3",
+    "pg": "^8.20.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^5.3.4",
@@ -27,4 +28,3 @@
     "uuid": "demo-cms-uuid"
   }
 }
-
